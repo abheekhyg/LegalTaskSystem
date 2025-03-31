@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Add New Task</h1>
+    
+    <form action="{{ url_for('add_task') }}" method="post" class="mt-4">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="user" class="form-label">User</label>
+                <input type="text" class="form-control" id="user" name="user" required>
+            </div>
+            <div class="col-md-6">
+                <label for="department" class="form-label">Department</label>
+                <select class="form-select" id="department" name="department" required>
+                    <option value="" selected disabled>Select Department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}">{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category" required onchange="updateSubcategories()">
+                    <option value="" selected disabled>Select Category</option>
+                    {% for category in category_data %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="sub_category" class="form-label">Sub-category</label>
+                <select class="form-select" id="sub_category" name="sub_category" required onchange="updateEstimatedTime()">
+                    <option value="" selected disabled>Select Sub-category</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" maxlength="500" required></textarea>
+            <div class="form-text">Maximum 500 characters</div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="estimated_time" class="form-label">Estimated Time (hours)</label>
+                <input type="number" step="0.01" class="form-control" id="estimated_time" name="estimated_time" readonly required>
+            </div>
+            <div class="col-md-6">
+                <label for="time_spent" class="form-label">Time Spent (hours)</label>
+                <input type="number" step="0.01" class="form-control" id="time_spent" name="time_spent" value="0" required>
+            </div>
+        </div>
+        
+        <div class="text-end">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+    </form>
+</div>
+
+{% block scripts %}
+<script>
+    // Category data from Flask
+    const categoryData = {{ category_data|tojson }};
+    
+    // Function to update subcategories based on selected category
+    function updateSubcategories() {
+        const categorySelect = document.getElementById('category');
+        const subcategorySelect = document.getElementById('sub_category');
+        const selectedCategory = categorySelect.value;
+        
+        // Clear existing options
+        subcategorySelect.innerHTML = '<option value="" selected disabled>Select Sub-category</option>';
+        
+        // Populate subcategories if a valid category is selected
+        if (selectedCategory && categoryData[selectedCategory]) {
+            const subcategories = Object.keys(categoryData[selectedCategory]);
+            subcategories.forEach(subcategory => {
+                const option = document.createElement('option');
+                option.value = subcategory;
+                option.textContent = subcategory;
+                subcategorySelect.appendChild(option);
+            });
+        }
+        
+        // Reset estimated time when category changes
+        document.getElementById('estimated_time').value = '';
+    }
+    
+    // Function to update estimated time based on selected category and subcategory
+    function updateEstimatedTime() {
+        const categorySelect = document.getElementById('category');
+        const subcategorySelect = document.getElementById('sub_category');
+        const estimatedTimeInput = document.getElementById('estimated_time');
+        
+        const selectedCategory = categorySelect.value;
+        const selectedSubcategory = subcategorySelect.value;
+        
+        if (selectedCategory && selectedSubcategory && 
+            categoryData[selectedCategory] && 
+            categoryData[selectedCategory][selectedSubcategory] !== undefined) {
+            estimatedTimeInput.value = categoryData[selectedCategory][selectedSubcategory];
+        } else {
+            estimatedTimeInput.value = '';
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %} 

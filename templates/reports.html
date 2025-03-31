@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Reports & Analytics</h1>
+    <p class="lead">Ask questions about your task data and get insights with visualizations.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="chat-container" class="mb-4" style="height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+                        <div class="system-message">
+                            <p>Hello! I'm your task analytics assistant. You can ask me questions about your task data, and I'll provide insights and visualizations. For example:</p>
+                            <ul>
+                                <li>Show me the total hours spent by each user this month</li>
+                                <li>Compare estimated vs actual time for each department</li>
+                                <li>What are the most time-consuming categories?</li>
+                                <li>Show me task completion trends over time</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="text" id="user-input" class="form-control" placeholder="Type your question here...">
+                        <button class="btn btn-primary" id="send-button">
+                            <i class="bi bi-send"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading spinner -->
+    <div id="loading-spinner" class="text-center mt-3 d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Analyzing your data...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Chart.js for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        // Function to add a message to the chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'user-message my-3 text-end' : 'assistant-message my-3';
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = isUser 
+                ? 'p-3 bg-primary text-white rounded d-inline-block' 
+                : 'p-3 bg-light rounded d-inline-block';
+            
+            if (isUser) {
+                messageBubble.textContent = content;
+            } else {
+                // For assistant messages, we might have HTML content with charts
+                messageBubble.innerHTML = content;
+            }
+            
+            messageDiv.appendChild(messageBubble);
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to the bottom of the chat
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Execute any scripts in the response (for Chart.js)
+            if (!isUser) {
+                const scripts = messageBubble.querySelectorAll('script');
+                scripts.forEach(script => {
+                    const newScript = document.createElement('script');
+                    newScript.text = script.textContent;
+                    document.body.appendChild(newScript);
+                });
+            }
+        }
+        
+        // Function to send the user query to the API
+        async function sendQuery(query) {
+            try {
+                loadingSpinner.classList.remove('d-none');
+                
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('Sorry, there was an error processing your request: ' + data.error);
+                } else {
+                    addMessage(data.response);
+                }
+            } catch (error) {
+                addMessage('Sorry, there was an error connecting to the server.');
+                console.error('Error:', error);
+            } finally {
+                loadingSpinner.classList.add('d-none');
+            }
+        }
+        
+        // Event listener for the send button
+        sendButton.addEventListener('click', function() {
+            const query = userInput.value.trim();
+            if (query) {
+                addMessage(query, true);
+                userInput.value = '';
+                sendQuery(query);
+            }
+        });
+        
+        // Event listener for pressing Enter in the input field
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = userInput.value.trim();
+                if (query) {
+                    addMessage(query, true);
+                    userInput.value = '';
+                    sendQuery(query);
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

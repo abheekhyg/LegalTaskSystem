@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>{{ task.Display_id }}</h2>
+            <button class="btn btn-primary" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#addTimeModal" 
+                    data-task-id="{{ task.Task_id }}"
+                    data-display-id="{{ task.Display_id }}">
+                Add Time
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5>Department</h5>
+                    <p>{{ task.Dept_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Category</h5>
+                    <p>{{ task.Category }} > {{ task.Sub_category }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5>Created</h5>
+                    <p>{{ task.Date_Created.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Last Modified</h5>
+                    <p>{{ task.Date_Modified.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h5>Estimated Time</h5>
+                    <p>{{ task.Estimated_time }} hours</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Total Time Spent</h5>
+                    <p>{{ total_time_spent }} hours</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5>Description</h5>
+                <p>{{ task.Description }}</p>
+            </div>
+
+            <div class="mt-4">
+                <h4>Time Contributions</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Time (hours)</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.User_name }}</td>
+                            <td>{{ log.time_taken }}</td>
+                            <td>{{ log.log_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No time entries yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Time Modal -->
+<div class="modal fade" id="addTimeModal" tabindex="-1" aria-labelledby="addTimeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTimeModalLabel">Add Time to Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTimeForm" action="{{ url_for('add_time', task_id=task.Task_id) }}" method="post">
+                    <div class="mb-3">
+                        <label for="time_task_id" class="form-label">Task ID</label>
+                        <input type="text" class="form-control" id="time_display_id" value="{{ task.Display_id }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user_name" class="form-label">User Name</label>
+                        <input type="text" class="form-control" id="user_name" name="user_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="time_taken" class="form-label">Time Taken (hours)</label>
+                        <input type="number" step="0.01" class="form-control" id="time_taken" name="time_taken" required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Time</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %} 
