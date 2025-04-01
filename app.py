@@ -7,6 +7,7 @@ import re
 import json
 import requests
 import os
+from report_ai import init_reports
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -15,6 +16,7 @@ db.init_app(app)
 # Replace the deprecated before_first_request decorator
 with app.app_context():
     db.create_all()
+    init_reports(app)  # Initialize the reports functionality
 
 def generate_display_id():
     # Get the highest Display_id number or start with 0
